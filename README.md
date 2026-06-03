@@ -393,4 +393,5 @@ If you have questions or suggestions:
 
 ---
 
-**Made with ❤️ and Python**
+**Made with ❤️ and Python**#   f a k e _ n e w s _ d e t e c t i o n  
+ 
