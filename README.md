@@ -62,7 +62,7 @@ fake-news-detection/
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/Ujjwal-eng/fake_news_detection.git
+git clone https://github.com/Rahul08jb/fake_news_detection.git
 cd fake_news_detection
 ```
 
@@ -368,7 +368,7 @@ This project demonstrates understanding of:
 
 ## 👨‍💻 Author
 
-**Ujjwal Bansal**
+**Rahul08jb**
 - GitHub: [Rahul08jb](https://github.com/Rahul08jb)
 - Project: [Fake News Detection](https://github.com/Rahul08jb/fake_news_detection?tab=readme-ov-file)
 
@@ -395,4 +395,6 @@ If you have questions or suggestions:
 
 **Made with ❤️ and Python**#   f a k e _ n e w s _ d e t e c t i o n 
  
+ 
+#   f a k e _ n e w s _ d e t e c t i o n  
  
