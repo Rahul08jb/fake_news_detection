@@ -11,12 +11,9 @@ import pandas as pd
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-try:
-    from src.model import FakeNewsClassifier, ModelComparison
-    from src.data_processing import DataLoader, TextPreprocessor, FeatureExtractor
-except ImportError as e:
-    print(f"Import error: {e}")
-    print("Please ensure all source files are created first.")
+from src.model import FakeNewsClassifier, ModelComparison
+from src.data_processing import DataLoader, TextPreprocessor, FeatureExtractor
+
 
 
 class TestFakeNewsClassifier(unittest.TestCase):

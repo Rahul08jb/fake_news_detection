@@ -7,8 +7,8 @@ This module contains all the essential text processing functions including:
 - Vectorization (Count and TF-IDF)
 - Complete preprocessing pipeline
 
-Author: Ujjwal Bansal
-Date: November 2025
+Author: Rahul Kumar
+Date: feb 2026
 """
 
 import re
@@ -589,10 +589,18 @@ if __name__ == "__main__":
 
 # TextPreprocessor class for Flask app compatibility
 class TextPreprocessor:
+    """Compatibility preprocessor for both the Flask app and unit tests.
+
+    Unit tests expect:
+      - clean_text(text)
+      - preprocess_text(text)
+
+    The Flask app currently uses:
+      - preprocess(text)
+
+    This class provides all three methods.
     """
-    Simple text preprocessor for the Flask web application
-    """
-    
+
     def __init__(self):
         self.stemmer = PorterStemmer()
         try:
@@ -600,31 +608,100 @@ class TextPreprocessor:
         except:
             download_nltk_data()
             self.stop_words = set(stopwords.words('english'))
-    
-    def preprocess(self, text: str) -> str:
-        """
-        Preprocess text for prediction
-        
-        Args:
-            text (str): Input text
-            
-        Returns:
-            str: Preprocessed text
-        """
-        # Convert to lowercase
-        text = text.lower()
-        
+
+    def clean_text(self, text: str) -> str:
+        """Remove URLs, mentions, hashtags, and digits (as required by tests)."""
+        text = text or ""
         # Remove URLs
         text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
-        
-        # Remove special characters and digits
-        text = re.sub(r'[^a-zA-Z\s]', '', text)
-        
-        # Tokenize
-        tokens = word_tokenize(text)
-        
-        # Remove stopwords and stem
-        tokens = [self.stemmer.stem(word) for word in tokens if word not in self.stop_words]
-        
-        # Join back
+        # Remove mentions and hashtags
+        text = re.sub(r'@\w+', '', text)
+        text = re.sub(r'#\w+', '', text)
+        # Remove digits
+        text = re.sub(r'\d+', '', text)
+        # Normalize whitespace
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
+
+    def preprocess_text(self, text: str) -> str:
+        """Full preprocessing expected by tests: return non-empty lowercase string."""
+        cleaned = self.clean_text(text)
+        cleaned = cleaned.lower()
+
+        # Remove non-letters (keep spaces)
+        cleaned = re.sub(r'[^a-zA-Z\s]', ' ', cleaned)
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+        # Avoid NLTK punkt dependency for unit tests.
+        tokens = re.findall(r"\b[a-zA-Z]+\b", cleaned)
+        tokens = [self.stemmer.stem(tok) for tok in tokens if tok and tok not in self.stop_words]
         return ' '.join(tokens)
+
+
+    def preprocess(self, text: str) -> str:
+        """Alias used by Flask app (kept for backward compatibility)."""
+        return self.preprocess_text(text)
+
+
+class DataLoader:
+    """Minimal data loader expected by unit tests."""
+
+    def create_sample_data(self) -> pd.DataFrame:
+        sample_data = [
+            ("The World Health Organization announced new guidelines for global health emergency preparedness.", 0),
+            ("Researchers at Stanford published a peer-reviewed study on climate change effects.", 0),
+            ("BREAKING: Scientists discover a miracle cure that solves all diseases within 30 days!", 1),
+            ("URGENT: Forward this message to 20 contacts to avoid WhatsApp charges.", 1),
+        ]
+        return pd.DataFrame(sample_data, columns=["text", "label"])
+
+
+class FeatureExtractor:
+    """Placeholder feature extractor expected by unit tests.
+
+    The web app uses a vectorizer loaded from disk, while unit tests only
+    require that this class exists.
+    """
+
+    def __init__(self):
+        self.vectorizer = None
+
+
+def prepare_data(df: pd.DataFrame):
+    """Backward-compatible helper used by src/model.py.
+
+    Returns:
+      X_train, X_test, y_train, y_test, feature_extractor
+    """
+    if 'text' not in df.columns or 'label' not in df.columns:
+        raise ValueError("DataFrame must contain 'text' and 'label' columns")
+
+    from sklearn.model_selection import train_test_split
+
+    # Basic split (stratify if possible)
+    stratify = df['label'] if df['label'].nunique() > 1 else None
+    X_train_text, X_test_text, y_train, y_test = train_test_split(
+        df['text'], df['label'], test_size=0.2, random_state=42, stratify=stratify
+    )
+
+    preprocessor = TextPreprocessor()
+    X_train = X_train_text.apply(preprocessor.preprocess_text).tolist()
+    X_test = X_test_text.apply(preprocessor.preprocess_text).tolist()
+
+    vectorizer = TextVectorizer(
+        vectorizer_type='tfidf',
+        max_features=5000,
+        ngram_range=(1, 2),
+        min_df=1,
+        max_df=0.9,
+    )
+
+    X_train_vec = vectorizer.fit_transform(X_train)
+    X_test_vec = vectorizer.transform(X_test)
+
+    fe = FeatureExtractor()
+    fe.vectorizer = vectorizer.vectorizer
+
+    return X_train_vec, X_test_vec, y_train.to_numpy(), y_test.to_numpy(), fe
+
+

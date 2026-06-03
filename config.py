@@ -3,14 +3,18 @@
 import os
 from dotenv import load_dotenv
 
+# Project root. Keep runtime paths stable even when app.py is launched from
+# another working directory by an IDE or terminal.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Load environment variables from .env file (secure API key storage)
 load_dotenv()
 
 # Data paths
-DATA_DIR = "data"
+DATA_DIR = os.path.join(BASE_DIR, "data")
 RAW_DATA_DIR = os.path.join(DATA_DIR, "raw")
 PROCESSED_DATA_DIR = os.path.join(DATA_DIR, "processed")
-MODELS_DIR = "models"
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 # Model settings
 MODEL_NAMES = ["naive_bayes", "random_forest", "logistic_regression"]

@@ -14,10 +14,16 @@ Ensemble: Majority voting with confidence-based tie-breaking
 from flask import Flask, render_template, request, jsonify
 import os
 import re
+import sys
 import joblib
 import numpy as np
 from src.data_processing import TextPreprocessor
 import config
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # Try to import FactChecker (optional - requires spacy)
 try:
@@ -189,6 +195,35 @@ def validate_input(text: str, preprocessor) -> tuple:
     return True, "", warning
 
 
+def get_real_fake_probabilities(model, text_vectorized, prediction):
+    """Return normalized [real, fake] probabilities for persisted models."""
+    try:
+        raw_probabilities = np.asarray(model.predict_proba(text_vectorized)[0], dtype=float)
+        classes = getattr(model, "classes_", np.array([0, 1]))
+
+        probabilities = np.zeros(2, dtype=float)
+        for class_label, probability in zip(classes, raw_probabilities):
+            if int(class_label) in (0, 1):
+                probabilities[int(class_label)] = probability
+    except Exception as e:
+        print(f"⚠ Probability fallback used for {type(model).__name__}: {e}")
+        if hasattr(model, "decision_function"):
+            score = float(np.ravel(model.decision_function(text_vectorized))[0])
+            fake_probability = 1.0 / (1.0 + np.exp(-score))
+            probabilities = np.array([1.0 - fake_probability, fake_probability], dtype=float)
+        else:
+            probabilities = np.array([1.0, 0.0] if prediction == 0 else [0.0, 1.0], dtype=float)
+
+    probabilities = np.nan_to_num(probabilities, nan=0.0, posinf=1.0, neginf=0.0)
+    probabilities = np.clip(probabilities, 0.0, 1.0)
+    total = probabilities.sum()
+
+    if total <= 0:
+        return np.array([1.0, 0.0] if prediction == 0 else [0.0, 1.0], dtype=float)
+
+    return probabilities / total
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     """Handle prediction requests using ensemble voting from all models"""
@@ -247,8 +282,13 @@ def predict():
         
         for model_name, model in models.items():
             # Make prediction
-            prediction = model.predict(text_vectorized)[0]
-            prediction_proba = model.predict_proba(text_vectorized)[0]
+            try:
+                prediction = model.predict(text_vectorized)[0]
+            except Exception as e:
+                print(f"⚠ Skipping {model_name}; prediction failed: {e}")
+                continue
+
+            prediction_proba = get_real_fake_probabilities(model, text_vectorized, prediction)
             
             # prediction_proba is [prob_class_0, prob_class_1]
             # where class 0 = REAL, class 1 = FAKE
@@ -281,9 +321,15 @@ def predict():
             else:  # Real
                 real_votes += 1
                 sum_of_confidences += real_prob
+
+        if not all_predictions:
+            return jsonify({
+                'error': 'No loaded models could make a prediction. Retrain the models or install the scikit-learn version used to create them.',
+                'success': False
+            })
         
         # Calculate average confidences for each class
-        num_models = len(models)
+        num_models = len(all_predictions)
         avg_fake_confidence = sum(all_fake_probs) / num_models
         avg_real_confidence = sum(all_real_probs) / num_models
         
