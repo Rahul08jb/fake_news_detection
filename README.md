@@ -369,8 +369,8 @@ This project demonstrates understanding of:
 ## 👨‍💻 Author
 
 **Ujjwal Bansal**
-- GitHub: [@Ujjwal-eng](https://github.com/Ujjwal-eng)
-- Project: [Fake News Detection](https://github.com/Ujjwal-eng/fake_news_detection)
+- GitHub: [Rahul08jb](https://github.com/Rahul08jb)
+- Project: [Fake News Detection](https://github.com/Rahul08jb/fake_news_detection?tab=readme-ov-file)
 
 ## 📄 License
 
@@ -393,5 +393,6 @@ If you have questions or suggestions:
 
 ---
 
-**Made with ❤️ and Python**#   f a k e _ n e w s _ d e t e c t i o n  
+**Made with ❤️ and Python**#   f a k e _ n e w s _ d e t e c t i o n 
+ 
  
