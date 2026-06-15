@@ -160,3 +160,4 @@ A: You'll see "🌐 Google API Active" instead of "📚 Wikipedia Mode"
 ---
 
 **Ready to enable?** See [GOOGLE_API_SETUP.md](GOOGLE_API_SETUP.md) for step-by-step instructions!
+

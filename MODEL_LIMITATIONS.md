@@ -373,3 +373,4 @@ def validate_input(text, preprocessor):
 - AI Fact-Checker (spaCy 3.8 + Wikipedia API)
 - Input Validation & Edge Case Handling  
 **Training Data:** 2016-2023 (11,632 articles)
+

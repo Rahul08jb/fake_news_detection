@@ -328,3 +328,4 @@ If you need to:
 - Change colors → Edit `templates/index_professional.html` CSS section
 
 **You're all set! 🎉**
+
