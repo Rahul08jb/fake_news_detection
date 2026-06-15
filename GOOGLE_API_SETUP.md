@@ -191,3 +191,4 @@ If you encounter issues:
 ---
 
 **Note**: The Google Fact Check API is **optional**. The fake news detector works perfectly fine without it using Wikipedia verification and pattern matching. The Google API adds an extra layer of verification from professional fact-checkers.
+
