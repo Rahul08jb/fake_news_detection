@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: fake-news-detection
+    env: python
+    plan: free
+    region: oregon
+
+    buildCommand: |
+      pip install -r fake_news_detection/requirements.txt
+      python -m spacy download en_core_web_sm
+
+    startCommand: |
+      gunicorn fake_news_detection.app:app \
+        --bind 0.0.0.0:${PORT:-5000} \
+        --workers 2 \
+        --timeout 120
+
+    envVars:
+      - key: PYTHONPATH
+        value: ./
+
